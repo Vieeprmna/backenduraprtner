@@ -1,0 +1,49 @@
+import pool from '../../config/db.js';
+
+export async function getAllUsers() {
+  const result = await pool.query('SELECT * FROM core.users');
+  return result.rows;
+}
+
+export async function createUser({ username, passwordHash, email, role, fullName }) {
+  const query = `
+    INSERT INTO core.users (username, password_hash, email, role, full_name)
+    VALUES ($1, $2, $3, $4, $5)
+    RETURNING *;
+  `;
+  const values = [username, passwordHash, email, role, fullName];
+  const result = await pool.query(query, values);
+  return result.rows[0];
+}
+
+export async function getUserByUsername(username) {
+  const query = 'SELECT * FROM core.users WHERE username = $1';
+  const result = await pool.query(query, [username]);
+  return result.rows[0];
+}
+
+export async function getUserByEmail(email) {
+  const query = 'SELECT * FROM core.users WHERE email = $1';
+  const result = await pool.query(query, [email]);
+  return result.rows[0];
+}
+
+export async function updateUserRole(id, role) {
+  const result = await pool.query(
+    'UPDATE core.users SET role = $1 WHERE user_id = $2 RETURNING user_id, username, email, role, full_name',
+    [role, id]
+  );
+  return result.rows[0];
+}
+
+export async function deleteUser(id) {
+  const query = 'DELETE FROM core.users WHERE user_id = $1 RETURNING user_id, username';
+  const result = await pool.query(query, [id]);
+  return result.rows[0];
+}
+
+export async function getUserByUsernameOrEmail(identifier) {
+  const sql = `SELECT * FROM core.users WHERE username = ? OR email = ? LIMIT 1`;
+  const [rows] = await db.query(sql, [identifier, identifier]);
+  return rows[0] || null;
+}
