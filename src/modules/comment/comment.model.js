@@ -36,3 +36,22 @@ export async function deleteComment(comment_id) {
 
     return result.rows[0];
 }
+
+// Tambah like ke komentar
+export async function toggleLike(comment_id, isLiked) {
+    const change = isLiked ? 1 : -1;
+
+    const result = await pool.query(
+        `UPDATE engagement.comments
+         SET likes = GREATEST(likes + $1, 0) -- biar ga minus
+         WHERE comment_id = $2
+         RETURNING *`,
+        [change, comment_id]
+    );
+
+    if (result.rows.length === 0) {
+        throw new Error("Comment not found");
+    }
+
+    return result.rows[0];
+}

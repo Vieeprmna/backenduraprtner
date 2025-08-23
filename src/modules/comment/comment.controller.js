@@ -48,5 +48,37 @@ export const CommentController = {
                 res.status(500).json({ error: 'Internal server error' });
             }
         }
+    },
+
+    // Tambah 1 like ke komentar
+// Tambah atau kurang like
+likeComment: async (req, res) => {
+    try {
+        const { id } = req.params;
+        const { action } = req.body; // 'like' atau 'dislike'
+
+        let isLiked;
+        if (action === "like") {
+            isLiked = true;
+        } else if (action === "dislike") {
+            isLiked = false;
+        } else {
+            return res.status(400).json({
+                isSuccess: false,
+                message: "Action must be 'like' or 'dislike'"
+            });
+        }
+
+        const updated = await CommentModel.toggleLike(id, isLiked);
+
+        res.status(200).json({
+            isSuccess: true,
+            message: `Comment with id ${id} ${action}d`,
+            updated
+        });
+    } catch (err) {
+        console.error(err);
+        res.status(500).json({ error: 'Internal server error' });
     }
+}
 };
