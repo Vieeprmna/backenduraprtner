@@ -8,6 +8,7 @@ import usersRoutes from './src/modules/users/users.routes.js';
 import googleAuthRoutes from './src/modules/users/googleauth.routes.js';
 import portoRoutes from './src/modules/porto/porto.routes.js';
 import commentRoutes from './src/modules/comment/comment.route.js';
+import messageRoutes from './src/modules/messages/messages.routes.js';
 
 dotenv.config();
 
@@ -27,6 +28,7 @@ app.use('/users', usersRoutes);
 app.use(googleAuthRoutes);
 app.use('/porto', portoRoutes);
 app.use(commentRoutes);
+app.use(messageRoutes);
 
 // Error handler biar gampang debug
 app.use((err, req, res, next) => {

@@ -11,16 +11,26 @@ export async function getUsersHandler(req, res) {   // get all user
   }
 }
 
-export async function createUserHandler(req, res) {     // register handler
+export async function createUserHandler(req, res) { // register handler
   try {
-    const { username, password, email, role, fullName } = req.body;
+    const { username, password, email, fullName } = req.body; // role dihapus
     const passwordHash = await bcrypt.hash(password, 10);
-    const newUser = await createUser({ username, passwordHash, email, role, fullName });
+
+    // role otomatis "client"
+    const newUser = await createUser({ 
+      username, 
+      passwordHash, 
+      email, 
+      fullName, 
+      role: "client" 
+    });
+
     res.status(201).json(newUser);
   } catch (err) {
     res.status(500).json({ error: err.message });
   }
 }
+
 
 export async function loginHandler(req, res) {  // login handler
   try {
