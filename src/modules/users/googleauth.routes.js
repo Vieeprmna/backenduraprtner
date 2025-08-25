@@ -19,7 +19,6 @@ router.get("/auth/google/callback",
     session: false 
   }),
   (req, res) => {
-    // Pastikan req.user ada
     if (!req.user) {
       return res.status(401).json({ message: "Autentikasi gagal" });
     }
@@ -30,7 +29,8 @@ router.get("/auth/google/callback",
       { expiresIn: "1h" }
     );
 
-    res.json({ message: "Login Google berhasil", token });
+    // 🚀 Redirect ke FE (misal React/Next.js jalan di port 3000)
+    res.redirect(`http://192.168.0.105:3000/auth/success?token=${token}`);
   }
 );
 

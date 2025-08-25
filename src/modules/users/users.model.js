@@ -43,7 +43,12 @@ export async function deleteUser(id) {
 }
 
 export async function getUserByUsernameOrEmail(identifier) {
-  const sql = `SELECT * FROM core.users WHERE username = ? OR email = ? LIMIT 1`;
-  const [rows] = await db.query(sql, [identifier, identifier]);
-  return rows[0] || null;
+  const query = `
+    SELECT * FROM core.users
+    WHERE username = $1 OR email = $1
+    LIMIT 1
+  `;
+  const result = await pool.query(query, [identifier]);
+  return result.rows[0] || null;
 }
+
