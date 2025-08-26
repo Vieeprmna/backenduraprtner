@@ -73,8 +73,11 @@ GOOGLE_CALLBACK_URL=http://localhost:5000/auth/google/callback
 6. Jalankan server
 
 7. npm start
-```
+
+---
+
 🔑 Endpoint Utama
+```
 🔹 Auth
 
 POST /login → login user (username + password)
