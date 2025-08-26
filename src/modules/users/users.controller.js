@@ -1,4 +1,4 @@
-import { getAllUsers, createUser , getUserByUsername , updateUserRole , deleteUser} from './users.model.js';
+import { getAllUsers, createUser , getUserByUsername , updateUserRole , deleteUser, updateUser, updateUserPassword} from './users.model.js';
 import bcrypt from 'bcrypt';
 import jwt from 'jsonwebtoken';
 
@@ -141,5 +141,50 @@ export async function deleteUserHandler(req, res) {
   }
  catch (err) {
   res.status(500).json({ error: err.message });
+  }
+}
+
+export async function updateUserHandler(req, res) {
+  try {
+    const { id } = req.params;
+    const { username, fullName, email } = req.body;
+
+    const updatedUser = await updateUser({ 
+      userId: id, 
+      username, 
+      fullName, 
+      email 
+    });
+
+    if (!updatedUser) {
+      return res.status(404).json({ message: 'User tidak ditemukan' });
+    }
+
+    res.json({ message: "User berhasil diperbarui", user: updatedUser });
+  } catch (err) {
+    res.status(500).json({ error: err.message });
+  }
+}
+
+
+// ✅ Update password (dengan cek oldPassword dulu)
+export async function updateUserPasswordHandler(req, res) {
+  try {
+    const { id } = req.params;
+    const { oldPassword, newPassword } = req.body;
+
+    if (!oldPassword || !newPassword) {
+      return res.status(400).json({ message: "Password lama & baru wajib diisi" });
+    }
+
+    const updatedUser = await updateUserPassword({ 
+      userId: id, 
+      oldPassword, 
+      newPassword 
+    });
+
+    res.json({ message: "Password berhasil diganti", user: updatedUser });
+  } catch (err) {
+    res.status(400).json({ error: err.message });
   }
 }

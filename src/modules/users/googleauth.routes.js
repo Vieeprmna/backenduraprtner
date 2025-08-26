@@ -30,7 +30,7 @@ router.get("/auth/google/callback",
     );
 
     // 🚀 Redirect ke FE (misal React/Next.js jalan di port 3000)
-    res.redirect(`http://192.168.0.105:3000/auth/success?token=${token}`);
+    res.redirect(`http://192.168.0.105:5173/auth/success?token=${token}`);
   }
 );
 
