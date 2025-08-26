@@ -73,7 +73,7 @@ GOOGLE_CALLBACK_URL=http://localhost:5000/auth/google/callback
 6. Jalankan server
 
 7. npm start
-
+```
 🔑 Endpoint Utama
 🔹 Auth
 
@@ -101,7 +101,9 @@ DELETE /users/:id → hapus user
 
 POST /api/chat → kirim prompt ke chatbot
 ```
+
 📌 Contoh Request
+```
 Register
 POST /users
 {
