@@ -61,14 +61,14 @@ src/
 
 
 5. Buat file .env
-
+```
 PORT=5000
 DATABASE_URL=postgresql://user:password@localhost:5432/namadb
 JWT_SECRET=your_secret_key
 GOOGLE_CLIENT_ID=xxxx.apps.googleusercontent.com
 GOOGLE_CLIENT_SECRET=xxxx
 GOOGLE_CALLBACK_URL=http://localhost:5000/auth/google/callback
-
+```
 
 6. Jalankan server
 
@@ -100,7 +100,7 @@ DELETE /users/:id → hapus user
 🔹 Chatbot
 
 POST /api/chat → kirim prompt ke chatbot
-
+```
 📌 Contoh Request
 Register
 POST /users
@@ -124,7 +124,7 @@ PUT /users/7/password
   "oldPassword": "123456",
   "newPassword": "abcdef"
 }
-
+```
 🔗 Testing dengan Ngrok
 
 Untuk mencoba callback Google login:
