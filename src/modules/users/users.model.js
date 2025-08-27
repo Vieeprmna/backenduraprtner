@@ -10,7 +10,7 @@ export async function createUser({ username, passwordHash, email, role, fullName
   const query = `
     INSERT INTO core.users (username, password_hash, email, role, full_name)
     VALUES ($1, $2, $3, $4, $5)
-    RETURNING *;
+    RETURNING user_id, username, email, role, full_name, created_at, last_login;
   `;
   const values = [username, passwordHash, email, role, fullName];
   const result = await pool.query(query, values);
@@ -31,7 +31,10 @@ export async function getUserByEmail(email) {
 
 export async function updateUserRole(id, role) {
   const result = await pool.query(
-    'UPDATE core.users SET role = $1 WHERE user_id = $2 RETURNING user_id, username, email, role, full_name',
+    `UPDATE core.users 
+     SET role = $1 
+     WHERE user_id = $2 
+     RETURNING user_id, username, email, role, full_name, last_login`,
     [role, id]
   );
   return result.rows[0];
@@ -53,8 +56,6 @@ export async function getUserByUsernameOrEmail(identifier) {
   return result.rows[0] || null;
 }
 
-//users changee useername and pass
-
 export async function updateUser({ userId, username, fullName, email }) {
   const query = `
     UPDATE core.users
@@ -62,7 +63,7 @@ export async function updateUser({ userId, username, fullName, email }) {
         full_name = COALESCE($2, full_name),
         email = COALESCE($3, email)
     WHERE user_id = $4
-    RETURNING user_id, username, email, role, full_name;
+    RETURNING user_id, username, email, role, full_name, last_login;
   `;
   const values = [username, fullName, email, userId];
   const result = await pool.query(query, values);
@@ -70,7 +71,6 @@ export async function updateUser({ userId, username, fullName, email }) {
 }
 
 export async function updateUserPassword({ userId, oldPassword, newPassword }) {
-  // cek password lama dulu
   const userRes = await pool.query("SELECT password_hash FROM core.users WHERE user_id = $1", [userId]);
   const user = userRes.rows[0];
   if (!user) throw new Error("User not found");
@@ -80,8 +80,30 @@ export async function updateUserPassword({ userId, oldPassword, newPassword }) {
 
   const newHash = await bcrypt.hash(newPassword, 10);
   const updateRes = await pool.query(
-    "UPDATE core.users SET password_hash = $1 WHERE user_id = $2 RETURNING user_id, username, email, role, full_name",
+    `UPDATE core.users 
+     SET password_hash = $1 
+     WHERE user_id = $2 
+     RETURNING user_id, username, email, role, full_name, last_login`,
     [newHash, userId]
   );
+  return updateRes.rows[0];
+}
+
+// ✅ login/authenticate + update last_login
+export async function authenticateUser(identifier, password) {
+  const user = await getUserByUsernameOrEmail(identifier);
+  if (!user) throw new Error("User not found");
+
+  const match = await bcrypt.compare(password, user.password_hash);
+  if (!match) throw new Error("Invalid credentials");
+
+  const updateRes = await pool.query(
+    `UPDATE core.users 
+     SET last_login = NOW() 
+     WHERE user_id = $1 
+     RETURNING user_id, username, email, role, full_name, last_login`,
+    [user.user_id]
+  );
+
   return updateRes.rows[0];
 }

@@ -9,6 +9,9 @@ import googleAuthRoutes from './src/modules/users/googleauth.routes.js';
 import portoRoutes from './src/modules/porto/porto.routes.js';
 import commentRoutes from './src/modules/comment/comment.route.js';
 import messageRoutes from './src/modules/messages/messages.routes.js';
+import serviceRoutes from './src/modules/service/service.routes.js';
+import partnerServiceRoutes from './src/modules/partnerService/partnerService.routes.js';
+import assignmentRoutes from './src/modules/assignment/assignment.routes.js';
 
 dotenv.config();
 
@@ -29,6 +32,9 @@ app.use(googleAuthRoutes);
 app.use('/porto', portoRoutes);
 app.use(commentRoutes);
 app.use(messageRoutes);
+app.use('/service', serviceRoutes);
+app.use('/partner-service', partnerServiceRoutes)
+app.use('/assignment', assignmentRoutes)
 
 
 // Error handler biar gampang debug

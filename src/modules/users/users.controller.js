@@ -1,22 +1,33 @@
-import { getAllUsers, createUser , getUserByUsername , updateUserRole , deleteUser, updateUser, updateUserPassword} from './users.model.js';
+import { 
+  getAllUsers, 
+  createUser, 
+  getUserByEmail,
+  updateUserRole, 
+  deleteUser, 
+  updateUser, 
+  updateUserPassword,
+  authenticateUser
+} from './users.model.js';
+import { success, error } from "../../utils/response.js"
 import bcrypt from 'bcrypt';
 import jwt from 'jsonwebtoken';
 
-export async function getUsersHandler(req, res) {   // get all user
+// ✅ Get all user
+export async function getUsersHandler(req, res) {
   try {
     const users = await getAllUsers();
-    res.json(users);
+    return success(res, users, "Users fetched successfully", 200)
   } catch (err) {
-    res.status(500).json({ error: err.message });
+    return error(res, "Failed to fetched users", 500, err.message)
   }
 }
 
-export async function createUserHandler(req, res) { // register handler
+// ✅ Register
+export async function createUserHandler(req, res) {
   try {
-    const { username, password, email, fullName } = req.body; // role dihapus
+    const { username, password, email, fullName } = req.body;
     const passwordHash = await bcrypt.hash(password, 10);
 
-    // role otomatis "client"
     const newUser = await createUser({ 
       username, 
       passwordHash, 
@@ -25,125 +36,100 @@ export async function createUserHandler(req, res) { // register handler
       role: "client" 
     });
 
-    res.status(201).json(newUser);
+    return success(res, newUser, "Users register successfully", 200)
   } catch (err) {
-    res.status(500).json({ error: err.message });
+    return error(res, "Failed to register", 500, err.message)
   }
 }
 
-
-export async function loginHandler(req, res) {  // login handler
+// ✅ Login
+export async function loginHandler(req, res) {
   try {
-    const { username, password } = req.body;
+    const { identifier, password } = req.body; 
+    // identifier = username atau email
 
-    const user = await getUserByUsername(username);
-    if (!user) {
-      return res.status(401).json({ error: 'User tidak ditemukan' });
-    }
+    const user = await authenticateUser(identifier, password);
 
-    const match = await bcrypt.compare(password, user.password_hash);
-    if (!match) {
-      return res.status(401).json({ error: 'Password salah' });
-    }
-
+    // generate JWT
     const token = jwt.sign(
       { userId: user.user_id, role: user.role },
       process.env.JWT_SECRET,
       { expiresIn: '1h' }
     );
 
-    res.json({ message: 'Login berhasil', token });
+    return success(res, token, "Login successfully", 200)
   } catch (err) {
-    res.status(500).json({ error: err.message });
+    return error(res, "Failed to login", 500, err.message)
   }
 }
 
-
-//login with google
+// ✅ Login with Google
 export async function googleLoginHandler(req, res) {
   try {
-    const profile = req.user; // Passport taruh data Google di req.user
+    const profile = req.user; 
     if (!profile) return res.status(401).json({ error: 'Google user tidak ditemukan' });
 
-    // Cek di DB apakah user sudah ada
     let user = await getUserByEmail(profile.email);
 
     if (!user) {
-      // Kalau belum ada, buat user baru otomatis dengan role client
       const username = profile.displayName ? profile.displayName.replace(/\s+/g, '') : profile.email.split('@')[0];
       user = await createUser({
         username,
         email: profile.email,
         fullName: profile.displayName || username,
         role: 'client',
-        passwordHash: null // Google login tidak pakai password
+        passwordHash: null
       });
     }
 
-    // Buat JWT
     const token = jwt.sign(
       { userId: user.user_id, role: user.role },
       process.env.JWT_SECRET,
       { expiresIn: '1h' }
     );
-
-    res.json({
-      message: 'Login Google berhasil',
-      token,
-      user: {
-        id: user.user_id,
-        username: user.username,
-        email: user.email,
-        role: user.role,
-        fullName: user.fullname
-      }
-    });
-
+    return success(res, token, "Login successfully", 200)
   } catch (err) {
-    res.status(500).json({ error: err.message });
+    return error(res, "Failed to login", 500, err.message)
   }
 }
 
-
-
-
-//change role for super admin
+// ✅ Update Role
 export async function updateUserRoleHandler(req, res) {
-    try {
-        const { id } = req.params;
-        const { role } = req.body;
+  try {
+    const { id } = req.params;
+    const { role } = req.body;
 
-        const validRoles = ['super_admin', 'admin', 'partner', 'client'];
-        if (!validRoles.includes(role)) {
-            return res.status(400).json({ message: 'Role tidak valid' });
-        }
-
-        const updatedUser = await updateUserRole(id, role);
-        if (!updatedUser) {
-            return res.status(404).json({ message: 'User tidak ditemukan' });
-        }
-
-        res.json({ message: 'Role berhasil diperbarui', user: updatedUser });
-    } catch (err) {
-        res.status(500).json({ error: err.message });
+    const validRoles = ['super_admin', 'partner', 'client'];
+    if (!validRoles.includes(role)) {
+      return res.status(400).json({ message: 'Role tidak valid' });
     }
+
+    const updatedUser = await updateUserRole(id, role);
+    if (!updatedUser) {
+      return error(res, "Users not found", 404, err.message)
+    }
+
+    return success(res, updatedUser, "Update role successfully", 200)
+  } catch (err) {
+    return error(res, "Failed to update role", 500, err.message)
+  }
 }
 
-// deleted user
+// ✅ Delete User
 export async function deleteUserHandler(req, res) {
   try {
     const { id } = req.params;
     const deletedUser = await deleteUser(id);
     if (!deletedUser) {
-      return res.status(404).json({ message: 'User tidak ditemukan' });
+      return error(res, "Users not found", 404, err.message)
     }
-    res.json({ message: 'User berhasil dihapus', userId: deletedUser.user_id , usernameDeleted: deletedUser.username });
-  }
- catch (err) {
-  res.status(500).json({ error: err.message });
+    return success(res, deletedUser, "Deleted users successfully", 200)
+  } catch (err) {
+    return error(res, "Failed to deleted", 500, err.message)
   }
 }
 
+// ✅ Update User
 export async function updateUserHandler(req, res) {
   try {
     const { id } = req.params;
@@ -157,24 +143,23 @@ export async function updateUserHandler(req, res) {
     });
 
     if (!updatedUser) {
-      return res.status(404).json({ message: 'User tidak ditemukan' });
+      return error(res, "Users not found", 404, err.message)
     }
 
-    res.json({ message: "User berhasil diperbarui", user: updatedUser });
+    return success(res, updatedUser, "Update succesfully", 200)
   } catch (err) {
-    res.status(500).json({ error: err.message });
+    return error(res, "Faled to update", 500, err.message)
   }
 }
 
-
-// ✅ Update password (dengan cek oldPassword dulu)
+// ✅ Update Password
 export async function updateUserPasswordHandler(req, res) {
   try {
     const { id } = req.params;
     const { oldPassword, newPassword } = req.body;
 
     if (!oldPassword || !newPassword) {
-      return res.status(400).json({ message: "Password lama & baru wajib diisi" });
+      return error(res, "Wrong Paswword", 400, err.message);
     }
 
     const updatedUser = await updateUserPassword({ 
@@ -183,8 +168,8 @@ export async function updateUserPasswordHandler(req, res) {
       newPassword 
     });
 
-    res.json({ message: "Password berhasil diganti", user: updatedUser });
+    return success(res, updatedUser, "Update password successfully", 200);
   } catch (err) {
-    res.status(400).json({ error: err.message });
+    return error(res, "failed to change password", 500, err.message);
   }
 }

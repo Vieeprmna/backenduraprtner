@@ -15,3 +15,13 @@ export async function postMessage (nama, email , message) {
          [nama, email, message]
     )
 }
+
+//delete message 
+// delete message by id
+export async function deleteMessage(id) {
+    const res = await pool.query(
+        `DELETE FROM engagement.messages WHERE id = $1 RETURNING *`,
+        [id]
+    );
+    return res.rows[0]; // balikin data yang dihapus
+}

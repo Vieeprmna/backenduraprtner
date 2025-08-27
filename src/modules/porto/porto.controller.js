@@ -1,14 +1,15 @@
 import fs from "fs";
+import { success, error } from "../../utils/response.js"
 import { getAllPortfolios, getPortfolioById, createPortfolio, updatePortfolio, deletePortfolio } from "./porto.model.js";
 
 // GET all
 export async function getPortfolios(req, res) {
   try {
     const data = await getAllPortfolios();
-    res.json(data);
+    return success(res, data, "Succesfuly get portofolio", 200)
   } catch (err) {
     console.error(err);
-    res.status(500).json({ message: "Internal Server Error", error: err.message });
+    return error(res, "Failed to get portofolio", 500, err.message)
   }
 }
 
@@ -17,10 +18,10 @@ export async function getPortfolio(req, res) {
   try {
     const data = await getPortfolioById(req.params.id);
     if (!data) return res.status(404).json({ message: "Portfolio not found" });
-    res.json(data);
+    return success(res, data, "Get porto by id is success", 200) 
   } catch (err) {
     console.error(err);
-    res.status(500).json({ message: "Internal Server Error", error: err.message });
+    return error(res, "Failed to get portofolio  by Id", 500, err.message)
   }
 }
 
@@ -30,10 +31,10 @@ export async function createPorto(req, res) {
     const { owner_type, owner_id, website_name, website_url, description } = req.body;
     const certificate = req.file ? req.file.filename : null; // ✅ cek file dulu
     const newItem = await createPortfolio({ owner_type, owner_id, website_name, website_url, description, certificate });
-    res.json(newItem);
+    return success(res, newItem, "Successfully create portofolio", 200);
   } catch (err) {
     console.error(err);
-    res.status(500).json({ message: "Internal Server Error", error: err.message });
+    return error(res, "Failed to create portofolio", 500, err.message);
   }
 }
 
@@ -55,10 +56,10 @@ export async function updatePorto(req, res) {
     }
 
     const updated = await updatePortfolio(req.params.id, { owner_type, owner_id, website_name, website_url, description, certificate });
-    res.json(updated);
+    return success(res, updated, "Successfully to update portofolio", 200)
   } catch (err) {
     console.error(err);
-    res.status(500).json({ message: "Internal Server Error", error: err.message });
+    return error(req, "Failed to update portofolio", 500, err.message);
   }
 }
 
@@ -74,9 +75,9 @@ export async function deletePorto(req, res) {
     }
 
     await deletePortfolio(req.params.id);
-    res.json({ message: "Deleted" });
+    return success(res, "Succesfully to deleted portofolio", 200)
   } catch (err) {
     console.error(err);
-    res.status(500).json({ message: "Internal Server Error", error: err.message });
+    return error(res, "Failed to deleted portofolio", 500, err.message);
   }
 }
