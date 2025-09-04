@@ -91,12 +91,21 @@ export async function updateUserPassword({ userId, oldPassword, newPassword }) {
 
 // ✅ login/authenticate + update last_login
 export async function authenticateUser(identifier, password) {
-  const user = await getUserByUsernameOrEmail(identifier);
+  // cek apakah identifier berupa email (ada '@') atau username
+  const query = identifier.includes('@')
+    ? `SELECT * FROM core.users WHERE email = $1 LIMIT 1`
+    : `SELECT * FROM core.users WHERE username = $1 LIMIT 1`;
+
+  const userRes = await pool.query(query, [identifier]);
+  const user = userRes.rows[0];
+
   if (!user) throw new Error("User not found");
+  if (!user.password_hash) throw new Error("User does not have a password set (Google login only)");
 
   const match = await bcrypt.compare(password, user.password_hash);
   if (!match) throw new Error("Invalid credentials");
 
+  // update last_login
   const updateRes = await pool.query(
     `UPDATE core.users 
      SET last_login = NOW() 
@@ -107,3 +116,4 @@ export async function authenticateUser(identifier, password) {
 
   return updateRes.rows[0];
 }
+
